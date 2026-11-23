@@ -8,8 +8,10 @@ h2{display:flex;justify-content:space-between;align-items:baseline;font-size:17p
 .tag{display:inline-block;margin-left:6px;font-size:12px;padding:1px 7px;border-radius:10px;background:#eef2f6;color:#486581;font-weight:600}
 .tag.r{background:#fdecea;color:#c62828}
 .tag.b{background:#e8f0fe;color:#1967d2}
-.x .n{text-decoration:line-through;color:#9aa5b1}.tag.off{text-decoration:none;background:#f1f3f5;color:#868e96}.upd{position:absolute;top:12px;right:12px;font-size:12px;color:#8a94a6}body{position:relative}</style></head><body>
-<div class="upd">更新：2026/11/15 00:08</div><h1>課表（11/14 – 1/17）</h1>
+.x .n{text-decoration:line-through;color:#9aa5b1}.x .t,.x .p{color:#b0bac5}.tag.off{text-decoration:none;background:#f1f3f5;color:#868e96}.upd{position:absolute;top:12px;right:12px;font-size:12px;color:#8a94a6}body{position:relative}
+section{scroll-margin-top:10px}section.done{opacity:.72}section.near{border-left:4px solid #1967d2;box-shadow:0 2px 8px rgba(25,103,210,.14)}
+.tag.near-tag{background:#e8f0fe;color:#1967d2;margin-left:6px;vertical-align:middle}</style></head><body>
+<div class="upd">更新：2026/11/23 15:21</div><h1>課表（11/14 – 1/17）</h1>
 <div class="info">教室：天機教學大樓 <b>2708</b>（危機管理特論在 <b style="color:#c62828">2413</b>、統計學特論在 <b style="color:#1967d2">2510</b>）<br>照護與決策分析特論 <b style="color:#d32f2f">09:00</b> 開始</div>
 <section><h2><span>11/14（六）</span><small>第 9 週</small></h2>
 <div class="c"><div class="t r">09:00–12:00</div><div><div class="n">照護與決策分析特論<span class="tag">2708</span></div><div class="p">龔建吉 老師</div></div></div>
@@ -69,4 +71,80 @@ h2{display:flex;justify-content:space-between;align-items:baseline;font-size:17p
 <section><h2><span>01/17（日）</span><small>第 18 週</small></h2>
 <div class="c"><div class="t">08:30–12:00</div><div><div class="n">顧客關係管理特論<span class="tag">2708</span></div><div class="p">林英顏 老師</div></div></div>
 <div class="c"><div class="t">13:30–17:00</div><div><div class="n">組織理論與管理特論<span class="tag">2708</span></div><div class="p">黃麗玲 老師</div></div></div>
-</section></body></html>
+</section>
+<script>
+(()=>{
+  const updEl=document.querySelector('.upd');
+  const baseYearMatch=updEl&&updEl.textContent.match(/(\d{4})/);
+  const baseYear=baseYearMatch?+baseYearMatch[1]:2026;
+  document.querySelectorAll('.c.x').forEach(el=>el.dataset.fixedX='1');
+
+  function update(shouldScroll){
+    const now=new Date();
+    const sections=[...document.querySelectorAll('section')];
+    let year=baseYear,prevMonth=0,target=null;
+
+    sections.forEach(sec=>{
+      sec.classList.remove('near','done');
+      const oldTag=sec.querySelector('.near-tag');
+      if(oldTag)oldTag.remove();
+
+      const titleSpan=sec.querySelector('h2 span');
+      const m=titleSpan&&titleSpan.textContent.match(/(\d{1,2})\/(\d{1,2})/);
+      if(!m)return;
+      const month=+m[1],day=+m[2];
+      if(prevMonth&&month<prevMonth)year++;
+      prevMonth=month;
+
+      const courses=[...sec.querySelectorAll('.c')];
+      let hasUpcoming=false;
+      courses.forEach(c=>{
+        const tEl=c.querySelector('.t');
+        const tm=tEl&&tEl.textContent.match(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/);
+        if(!tm)return;
+        const end=new Date(year,month-1,day,+tm[3],+tm[4],0);
+        const isPast=now>=end;
+        if(isPast||c.dataset.fixedX==='1'){
+          c.classList.add('x');
+        }else{
+          c.classList.remove('x');
+        }
+        if(!isPast&&c.dataset.fixedX!=='1'){
+          hasUpcoming=true;
+        }
+      });
+
+      if(courses.length&&courses.every(c=>c.classList.contains('x'))){
+        sec.classList.add('done');
+      }
+      if(!target&&hasUpcoming){
+        target={sec,year,month,day};
+      }
+    });
+
+    if(!target&&sections.length){
+      target={sec:sections[sections.length-1],year,month:prevMonth,day:0};
+    }
+    if(target){
+      target.sec.classList.add('near');
+      const h2Span=target.sec.querySelector('h2 span');
+      if(h2Span){
+        const isToday=now.getFullYear()===target.year&&now.getMonth()+1===target.month&&now.getDate()===target.day;
+        const badge=document.createElement('span');
+        badge.className='tag near-tag';
+        badge.textContent=isToday?'今天':'最近課程';
+        h2Span.appendChild(badge);
+      }
+      if(shouldScroll){
+        requestAnimationFrame(()=>setTimeout(()=>{
+          target.sec.scrollIntoView({behavior:'smooth',block:'start'});
+        },50));
+      }
+    }
+  }
+
+  update(true);
+  setInterval(()=>update(false),60000);
+})();
+</script>
+</body></html>
